@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - 'README.md'
       - 'CLAUDE.md'
+      - 'Makefile'
       - 'cicd/**'
       - '.github/**'
   workflow_dispatch:
@@ -46,7 +47,7 @@ jobs:
         # drops in the working directory.
         run: |
           gsutil -m rsync -r -d \
-            -x '^\.git/.*|^\.github/.*|^cicd/.*|^README\.md$|^CLAUDE\.md$|^\.gitignore$|^gha-creds-.*\.json$' \
+            -x '^\.git/.*|^\.github/.*|^cicd/.*|^README\.md$|^CLAUDE\.md$|^Makefile$|^\.gitignore$|^gha-creds-.*\.json$' \
             . gs://${BUCKET}
 
       - name: Set cache control on static assets

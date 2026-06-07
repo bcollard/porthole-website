@@ -59,7 +59,7 @@ which:
 1. Authenticates via Workload Identity Federation (no SA keys).
 2. `gsutil rsync -r -d` the repo root into `gs://porthole.runlocal.dev`,
    excluding `.git/`, `.github/`, `cicd/`, `README.md`, `CLAUDE.md`,
-   `.gitignore`, and **`gha-creds-*.json`** (see CLAUDE.md gotchas).
+   `Makefile`, `.gitignore`, and **`gha-creds-*.json`** (see CLAUDE.md gotchas).
 3. `gsutil setmeta` to set short cache for HTML/CSS (10 min) and long cache
    for images (1 day).
 
