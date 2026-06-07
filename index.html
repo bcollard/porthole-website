@@ -356,35 +356,35 @@ make e2e" aria-label="Copy install command">Copy</button>
 
     <div class="faq-list">
       <details>
-        <summary>How is this different from <code>kubectl debug</code> or Lens?</summary>
+        <summary><span>How is this different from <code>kubectl debug</code> or Lens?</span></summary>
         <p><code>kubectl debug</code> requires every developer to have a working kubeconfig and the right RBAC. Lens is great but assumes the same. porthole removes the kubeconfig from the developer's laptop entirely — the cluster sees a single SA (porthole's), and a corporate OIDC identity gets translated into namespace-scoped permission via OPA. The footprint on developers is just a URL.</p>
       </details>
       <details>
-        <summary>Why ephemeral containers?</summary>
+        <summary><span>Why ephemeral containers?</span></summary>
         <p>They give you <code>kubectl exec</code> ergonomics without modifying the workload container. Different image (your forensics toolkit, <code>psql</code>, …), same network namespace, same volumes as the target. The pod's deployment YAML stays untouched.</p>
       </details>
       <details>
-        <summary>Why an OPA sidecar instead of in-process rules?</summary>
+        <summary><span>Why an OPA sidecar instead of in-process rules?</span></summary>
         <p>Because policies grow. The Rego file in the repo demonstrates: <code>groups</code> from the JWT, namespace label match, glob namespace matching, business-hours constraints — combined in arbitrary ways without recompiling porthole. Sidecar gives you hot reload on a ConfigMap update.</p>
       </details>
       <details>
-        <summary>Does porthole need its own database?</summary>
+        <summary><span>Does porthole need its own database?</span></summary>
         <p>No. All state lives in Kubernetes (the ephemeral container, the kube events) or in the JWT (identity). porthole itself is stateless — you can run multiple replicas behind the gateway.</p>
       </details>
       <details>
-        <summary>What does it log?</summary>
+        <summary><span>What does it log?</span></summary>
         <p>One <code>slog</code> JSON line per inject and per attach-deny: <code>user</code>, <code>source_ip</code>, <code>namespace</code>, <code>pod</code>, <code>image</code>, <code>outcome</code>, <code>reason</code>, <code>duration_ms</code>. Successful attaches show up in gin's access log; the byte stream is never logged.</p>
       </details>
       <details>
-        <summary>Can I use a gateway other than Envoy Gateway?</summary>
+        <summary><span>Can I use a gateway other than Envoy Gateway?</span></summary>
         <p>Yes. Anything that does OIDC and forwards a JWT in a header upstream works — Kong, Traefik EE, Apache APISIX, Cloudflare Access, an oauth2-proxy in front. porthole only cares that <code>X-ID-Token</code> or <code>Authorization: Bearer …</code> contains a JWT that validates against the JWKS URL you set.</p>
       </details>
       <details>
-        <summary>How does resize work over the websocket?</summary>
+        <summary><span>How does resize work over the websocket?</span></summary>
         <p>The websocket is the only channel. Stdin and stdout travel as binary frames; the browser sends a JSON text frame for resize: <code>{"type":"resize","cols":120,"rows":30}</code>. porthole pushes that into a <code>remotecommand.TerminalSizeQueue</code>; the kubelet turns it into <code>TIOCSWINSZ</code> on the PTY.</p>
       </details>
       <details>
-        <summary>Is it open source?</summary>
+        <summary><span>Is it open source?</span></summary>
         <p>Yes. Source on <a href="https://github.com/bcollard/porthole" target="_blank" rel="noopener">GitHub</a>. Issues and PRs welcome.</p>
       </details>
     </div>
