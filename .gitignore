@@ -1,0 +1,39 @@
+# Editor / OS noise
+.claude/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Secrets — never commit anything that looks remotely like a credential
+# (these patterns also catch what GHA's google-github-actions/auth drops
+# in the workspace at workflow time, in case anyone runs `act` locally).
+gha-creds-*.json
+*service-account*.json
+*-sa-key*.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.env
+.env.*
+!.env.example
+.envrc
+secrets.yaml
+secrets.yml
+secrets.json
+credentials.json
+.netrc
+.aws/
+.gcp/
+
+# Build / preview / log artifacts
+node_modules/
+dist/
+build/
+.cache/
+*.log

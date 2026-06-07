@@ -1,0 +1,66 @@
+name: Deploy website to GCS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'cicd/**'
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    env:
+      BUCKET: porthole.runlocal.dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth via Workload Identity Federation
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/681025799424/locations/global/workloadIdentityPools/gitops-pool/providers/gh-provider'
+          service_account: 'gha-push-gcs-porthole@personal-218506.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 446.0.0'
+
+      - name: gcloud info
+        run: gcloud info
+
+      - name: Sync site root → gs://${{ env.BUCKET }}
+        # -m parallel, -r recursive, -d true-mirror.
+        # Exclude things that aren't part of the published site — including
+        # the WIF auth temp file (gha-creds-*.json) that google-github-actions/auth
+        # drops in the working directory.
+        run: |
+          gsutil -m rsync -r -d \
+            -x '^\.git/.*|^\.github/.*|^cicd/.*|^README\.md$|^CLAUDE\.md$|^\.gitignore$|^gha-creds-.*\.json$' \
+            . gs://${BUCKET}
+
+      - name: Set cache control on static assets
+        shell: bash
+        run: |
+          # Short cache for HTML / CSS so deploys propagate fast.
+          gsutil -m setmeta -h 'Cache-Control:public, max-age=600' "gs://${BUCKET}/index.html" || true
+          gsutil -m setmeta -h 'Cache-Control:public, max-age=600' "gs://${BUCKET}/404.html"   || true
+          gsutil -m setmeta -h 'Cache-Control:public, max-age=600' "gs://${BUCKET}/styles.css" || true
+          # Longer cache for images — they're versioned implicitly by name.
+          gsutil -m setmeta -h 'Cache-Control:public, max-age=86400' "gs://${BUCKET}/assets/**.png" || true
+          gsutil -m setmeta -h 'Cache-Control:public, max-age=86400' "gs://${BUCKET}/assets/**.svg" || true
+
+      - name: Summary
+        run: |
+          echo "Deployed website to gs://${BUCKET}/" >> $GITHUB_STEP_SUMMARY
+          echo "URL: https://porthole.runlocal.dev/" >> $GITHUB_STEP_SUMMARY

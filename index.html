@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>porthole — Kubernetes debug terminal in your browser</title>
+  <meta name="description" content="Inject ephemeral containers into running pods and attach to them from your browser. OIDC at the edge, OPA inside, structured audit log out. Open source.">
+  <link rel="canonical" href="https://porthole.runlocal.dev/">
+
+  <meta name="theme-color" content="#6ea8fe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+
+  <meta name="application-name" content="porthole">
+  <meta name="author" content="Baptiste Collard">
+  <meta name="generator" content="hand-rolled HTML">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="porthole">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://porthole.runlocal.dev/">
+  <meta property="og:title" content="porthole — Kubernetes debug terminal in your browser">
+  <meta property="og:description" content="Pick a pod, inject any debug image, attach over a single websocket. Identity verified at the edge, every action logged.">
+  <meta property="og:image" content="https://porthole.runlocal.dev/assets/og-image.png">
+  <meta property="og:image:secure_url" content="https://porthole.runlocal.dev/assets/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="porthole — Kubernetes debug terminal in your browser.">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://porthole.runlocal.dev/">
+  <meta name="twitter:title" content="porthole — Kubernetes debug terminal in your browser">
+  <meta name="twitter:description" content="Pick a pod, inject any debug image, attach over a single websocket. Identity verified at the edge, every action logged.">
+  <meta name="twitter:image" content="https://porthole.runlocal.dev/assets/og-image.png">
+  <meta name="twitter:image:alt" content="porthole — Kubernetes debug terminal in your browser.">
+
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="mask-icon" href="/assets/favicon.svg" color="#6ea8fe">
+
+  <link rel="stylesheet" href="/styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "porthole",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Kubernetes",
+    "url": "https://porthole.runlocal.dev/",
+    "downloadUrl": "https://github.com/bcollard/porthole",
+    "description": "Browser-based debug terminal for Kubernetes. Inject ephemeral containers, attach over websocket, gated by OIDC + OPA.",
+    "license": "https://github.com/bcollard/porthole/blob/main/LICENSE",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "image": "https://porthole.runlocal.dev/assets/og-image.png"
+  }
+  </script>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="#top" aria-label="porthole">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" width="22" height="22">
+        <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+        <circle cx="32" cy="32" r="6"  fill="currentColor"/>
+      </svg>
+    </span>
+    <strong>porthole</strong>
+  </a>
+  <div class="nav-right">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#authz">Auth</a>
+    <a href="#audit">Audit</a>
+    <a href="#install">Install</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/bcollard/porthole" class="nav-github" target="_blank" rel="noopener">GitHub →</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <span class="sun">☀</span>
+      <span class="moon">☾</span>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="hero-bg" aria-hidden="true"></div>
+
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow">
+        <span class="dot"></span> Browser-driven · OIDC · OPA · Open source
+      </div>
+      <h1>
+        Kubernetes debug terminal,<br>
+        <span class="grad">in your browser.</span>
+      </h1>
+      <p class="lede">
+        <strong>porthole</strong> drops an <em>ephemeral container</em> next to any running pod, attaches to it from a slick web terminal, and logs every decision. Identity verified at the edge by your OIDC gateway. Every namespace touch decided by OPA. <code>kubectl exec</code> for developers who don't need <code>kubectl</code>.
+      </p>
+      <div class="cta">
+        <a href="#install" class="btn btn-primary">Self-host it</a>
+        <a href="https://github.com/bcollard/porthole" class="btn btn-ghost" target="_blank" rel="noopener">
+          Star on GitHub
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path fill="currentColor" d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
+          </svg>
+        </a>
+      </div>
+      <ul class="hero-bullets">
+        <li>Single Go binary. Embeds the SPA. One port, REST and WS share it.</li>
+        <li>Bring your own debug image — busybox, netshoot, psql, your own forensics toolkit.</li>
+        <li>OIDC handshake stays at the gateway; porthole just verifies the JWT.</li>
+      </ul>
+    </div>
+
+    <div class="hero-visual">
+      <div class="browser" role="presentation">
+        <div class="browser-chrome">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="url">https://porthole.example.com/ui/</span>
+        </div>
+        <div class="browser-body">
+          <div class="ui-mock">
+            <div class="ui-side">
+              <div class="ui-label">NAMESPACES</div>
+              <div class="ui-row">default</div>
+              <div class="ui-row ui-row-active">payments</div>
+              <div class="ui-row">checkout</div>
+              <div class="ui-row">edge-gw</div>
+              <div class="ui-label ui-mt">PODS / payments</div>
+              <div class="ui-row ui-row-active">api-7d4b9c5f-mznpr</div>
+              <div class="ui-row">worker-58df-q7w2x</div>
+            </div>
+            <div class="ui-term">
+              <div class="ui-term-bar">
+                <span class="ui-chip ui-chip-on">● porthole-a2045e61</span>
+                <span class="ui-action">+ Debugger</span>
+              </div>
+<pre class="ui-term-body"><span class="ok">$</span> <span class="cmd">ss -tlnp</span>
+LISTEN  0    128   *:8080  *:*
+LISTEN  0    128   *:9090  *:*
+
+<span class="ok">$</span> <span class="cmd">redis-cli -h cache PING</span>
+PONG
+
+<span class="ok">$</span> <span class="cmd">stty size</span>
+38 132
+
+<span class="ok">$</span> <span class="cmd">_</span><span class="caret">▌</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="features">
+  <div class="container">
+    <p class="kicker">Why</p>
+    <h2>The friction between a developer and a misbehaving pod, removed.</h2>
+    <p class="section-lede">
+      Lens and k9s are great if every developer has cluster credentials and a kubeconfig. Most don't. porthole hands them a URL, an OIDC login, and a terminal — backed by ephemeral containers so the target pod stays exactly as deployed.
+    </p>
+
+    <div class="feature-grid">
+      <article class="card">
+        <span class="card-num">01</span>
+        <h3>Browser-first</h3>
+        <p>A single page, an embedded xterm.js terminal, a single websocket. Stdin/stdout flow as binary frames; resize travels as a JSON control frame. No kubectl on the developer's laptop. No SSH bastion.</p>
+      </article>
+      <article class="card">
+        <span class="card-num">02</span>
+        <h3>Ephemeral, not invasive</h3>
+        <p>porthole patches the pod's <code>ephemeralcontainers</code> subresource — the workload container is untouched and stays in place. When the websocket closes, the debug container can be evicted by the next pod restart.</p>
+      </article>
+      <article class="card">
+        <span class="card-num">03</span>
+        <h3>Any debug image</h3>
+        <p>Default is <code>nicolaka/netshoot</code>. Pass <code>busybox</code>, <code>alpine</code>, <code>postgres</code> for a <code>psql</code> client, or your own forensic image. Pulls go through your registry's normal auth.</p>
+      </article>
+      <article class="card">
+        <span class="card-num">04</span>
+        <h3>OIDC at the edge</h3>
+        <p>Front porthole with an Envoy Gateway <code>SecurityPolicy</code> (or your gateway of choice). porthole only trusts JWTs it can verify against the JWKS endpoint — no header forgery, no shared secrets.</p>
+      </article>
+      <article class="card">
+        <span class="card-num">05</span>
+        <h3>OPA-decided authZ</h3>
+        <p>An OPA sidecar runs the Rego your platform team writes. Group memberships from the JWT, namespace labels resolved live, time-windows, glob matchers — everything is data, not code.</p>
+      </article>
+      <article class="card">
+        <span class="card-num">06</span>
+        <h3>One JSON line per decision</h3>
+        <p>Structured slog output, one line per <code>inject</code> and per <code>attach</code> deny. SIEM-friendly out of the box: <code>user</code>, <code>namespace</code>, <code>pod</code>, <code>image</code>, <code>outcome</code>, <code>reason</code>.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="how">
+  <div class="container">
+    <p class="kicker">Under the hood</p>
+    <h2>One websocket. Three byte paths. Zero magic.</h2>
+    <p class="section-lede">
+      Browser → gateway → porthole → kube-apiserver → kubelet → PTY. porthole multiplexes three flows over the single websocket: stdin and stdout as binary frames, resize as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half.
+    </p>
+
+    <div class="arch-bullets">
+      <div>
+        <h4>Browser ↔ porthole</h4>
+        <p>Binary frames carry stdin/stdout. <code>{"type":"resize","cols":N,"rows":M}</code> as a text frame keeps the PTY size in sync with the browser. xterm.js handles the rendering.</p>
+      </div>
+      <div>
+        <h4>porthole ↔ kube-apiserver</h4>
+        <p>Standard <code>POST /api/v1/namespaces/&lt;ns&gt;/pods/&lt;p&gt;/attach</code> via the client-go <code>remotecommand</code> executor — SPDY with WebSocket fallback. A <code>TerminalSizeQueue</code> propagates resize events to the kubelet.</p>
+      </div>
+      <div>
+        <h4>kubelet ↔ container PTY</h4>
+        <p>Vanilla CRI streaming. Resize events become <code>TIOCSWINSZ</code> ioctls + <code>SIGWINCH</code>. Source-IP and TLS terminate at the gateway — porthole runs cleartext inside the cluster.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="authz">
+  <div class="container">
+    <p class="kicker">Identity &amp; authorization</p>
+    <h2>Identity at the edge. Decisions next door.</h2>
+    <p class="section-lede">
+      porthole separates <em>who</em> from <em>what's allowed</em>. Your gateway proves who. OPA decides what. Both arrows are independent so you can swap either side.
+    </p>
+
+    <div class="split">
+      <div class="split-col">
+        <h3>Authentication</h3>
+        <p>The gateway runs the OIDC handshake (against Keycloak, Auth0, Google, whatever) and forwards the validated request upstream with the token in a header. porthole reads <code>X-ID-Token</code> first, falls back to <code>Authorization: Bearer …</code>, validates against the configured JWKS endpoint, extracts <code>sub</code>, <code>email</code>, <code>groups</code>.</p>
+        <pre class="code"><code><span class="dim"># SecurityPolicy on Envoy Gateway</span>
+<span class="kw">spec</span>:
+  oidc:
+    provider:
+      issuer: <span class="str">"https://idp.example.com/realms/eng"</span>
+    clientID: <span class="str">"porthole"</span>
+    clientSecret:
+      name: porthole-oidc-secret
+    scopes: [<span class="str">openid</span>, <span class="str">profile</span>, <span class="str">email</span>]
+    forwardAccessToken: <span class="lit">true</span></code></pre>
+      </div>
+
+      <div class="split-col">
+        <h3>Authorization</h3>
+        <p>An OPA sidecar runs alongside porthole. Each <code>list_pods</code>, <code>inject_ec</code>, <code>attach_ec</code> is sent as input — including the live namespace labels — and OPA returns <code>{allow, reason}</code>. The reason flows back into the audit log.</p>
+        <pre class="code"><code><span class="dim"># Rego — group × namespace_glob × labels × time</span>
+<span class="kw">decision</span> := {<span class="str">"allow"</span>: true, <span class="str">"reason"</span>: reason} <span class="kw">if</span> {
+  some binding in data.policy.bindings
+  binding.group in input.user.groups
+  matches_namespace(binding, input.request.namespace)
+  input.request.action in data.policy.roles[binding.role]
+  not violates_time_window(binding)
+  reason := <span class="str">"matched"</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Policy is data.</strong> Roles, bindings, and namespace-label requirements live in a JSON file mounted as a ConfigMap. <code>opa eval</code> against the file gives the platform team a regression suite that runs anywhere.
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="audit">
+  <div class="container">
+    <p class="kicker">Audit</p>
+    <h2>One JSON line per security-relevant action.</h2>
+    <p class="section-lede">
+      Every inject — success, error, or deny — emits an <code>slog</code> JSON line on stdout. Same for every attach that the policy refuses. Picks up cleanly in Loki, Splunk, or any structured-log pipeline.
+    </p>
+
+    <pre class="audit-pre"><code>{
+  <span class="key">"time"</span>:            <span class="str">"2026-06-07T10:53:45Z"</span>,
+  <span class="key">"level"</span>:           <span class="str">"WARN"</span>,
+  <span class="key">"msg"</span>:             <span class="str">"inject"</span>,
+  <span class="key">"action"</span>:          <span class="str">"inject_ec"</span>,
+  <span class="key">"user"</span>:            <span class="str">"alice@example.com"</span>,
+  <span class="key">"source_ip"</span>:       <span class="str">"10.0.1.5"</span>,
+  <span class="key">"namespace"</span>:       <span class="str">"payments"</span>,
+  <span class="key">"pod"</span>:             <span class="str">"api-7d4b9c5f-mznpr"</span>,
+  <span class="key">"image"</span>:           <span class="str">"nicolaka/netshoot"</span>,
+  <span class="key">"duration_ms"</span>:     <span class="lit">12</span>,
+  <span class="key">"outcome"</span>:         <span class="str">"denied"</span>,
+  <span class="key">"reason"</span>:          <span class="str">"matched: group=devs ns=payments — outside business hours"</span>
+}</code></pre>
+  </div>
+</section>
+
+<section class="section" id="install">
+  <div class="container">
+    <p class="kicker">Self-host it</p>
+    <h2>One Go binary, one ConfigMap, one gateway.</h2>
+    <p class="section-lede">
+      Build with <code>ko</code>, apply the manifests, set OIDC + OPA env vars. The repo ships a working <code>Makefile</code>, Envoy Gateway manifests, and a Keycloak bootstrap script for trying it end-to-end.
+    </p>
+
+    <div class="install-grid">
+      <div class="install-cmd">
+        <pre><code><span class="prompt">$</span> git clone https://github.com/bcollard/porthole
+<span class="prompt">$</span> cd porthole
+<span class="prompt">$</span> make e2e             <span class="dim"># cluster + envoy + opa + keycloak</span></code></pre>
+        <button class="copy-btn" data-copy="git clone https://github.com/bcollard/porthole
+cd porthole
+make e2e" aria-label="Copy install command">Copy</button>
+      </div>
+
+      <aside class="install-notes">
+        <p><strong>Prereqs.</strong> A Kubernetes cluster (kind works), <code>kubectl</code>, <code>helm</code>, <code>ko</code>, an OIDC provider, and the <code>opa</code> CLI for local policy testing.</p>
+        <ul>
+          <li>Envoy Gateway 1.6+ for the supplied <code>SecurityPolicy</code>.</li>
+          <li>OPA <code>0.69+</code> runs as a sidecar in the porthole pod.</li>
+          <li>An OIDC client registered with your IdP and a redirect URL pointing at the gateway.</li>
+          <li>RBAC: porthole's SA needs <code>patch</code> on <code>pods/ephemeralcontainers</code> and <code>create</code> on <code>pods/attach</code>.</li>
+        </ul>
+      </aside>
+    </div>
+
+    <div class="quickstart">
+      <h3>Then a typical request looks like this</h3>
+      <pre class="quickstart-pre"><code><span class="dim"># Developer opens https://porthole.example.com/ui/, signs in via SSO,</span>
+<span class="dim"># picks namespace 'payments', then pod 'api-7d4b9c5f-mznpr'.</span>
+
+<span class="dim"># Browser → POST /debug/inject</span>
+{<span class="key">"namespace"</span>:<span class="str">"payments"</span>,<span class="key">"pod"</span>:<span class="str">"api-..."</span>,<span class="key">"image"</span>:<span class="str">"nicolaka/netshoot"</span>}
+
+<span class="dim"># porthole → OPA</span>
+{<span class="key">"input"</span>:{<span class="key">"user"</span>:{<span class="key">"groups"</span>:[<span class="str">"team-payments"</span>]},
+          <span class="key">"request"</span>:{<span class="key">"action"</span>:<span class="str">"inject_ec"</span>,<span class="key">"namespace"</span>:<span class="str">"payments"</span>},
+          <span class="key">"namespace_labels"</span>:{<span class="key">"tier"</span>:<span class="str">"production"</span>}}}
+<span class="dim"># OPA → porthole</span>
+{<span class="key">"result"</span>:{<span class="key">"allow"</span>:<span class="lit">true</span>,<span class="key">"reason"</span>:<span class="str">"matched: group=team-payments role=debugger ns=payments"</span>}}
+
+<span class="dim"># porthole → kube-apiserver (PATCH ephemeralcontainers) → kubelet starts the EC</span>
+<span class="dim"># Browser opens WS /term/payments/api-.../porthole-a2045e61 → attached.</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="faq">
+  <div class="container">
+    <p class="kicker">FAQ</p>
+    <h2>Common questions.</h2>
+
+    <div class="faq-list">
+      <details>
+        <summary>How is this different from <code>kubectl debug</code> or Lens?</summary>
+        <p><code>kubectl debug</code> requires every developer to have a working kubeconfig and the right RBAC. Lens is great but assumes the same. porthole removes the kubeconfig from the developer's laptop entirely — the cluster sees a single SA (porthole's), and a corporate OIDC identity gets translated into namespace-scoped permission via OPA. The footprint on developers is just a URL.</p>
+      </details>
+      <details>
+        <summary>Why ephemeral containers?</summary>
+        <p>They give you <code>kubectl exec</code> ergonomics without modifying the workload container. Different image (your forensics toolkit, <code>psql</code>, …), same network namespace, same volumes as the target. The pod's deployment YAML stays untouched.</p>
+      </details>
+      <details>
+        <summary>Why an OPA sidecar instead of in-process rules?</summary>
+        <p>Because policies grow. The Rego file in the repo demonstrates: <code>groups</code> from the JWT, namespace label match, glob namespace matching, business-hours constraints — combined in arbitrary ways without recompiling porthole. Sidecar gives you hot reload on a ConfigMap update.</p>
+      </details>
+      <details>
+        <summary>Does porthole need its own database?</summary>
+        <p>No. All state lives in Kubernetes (the ephemeral container, the kube events) or in the JWT (identity). porthole itself is stateless — you can run multiple replicas behind the gateway.</p>
+      </details>
+      <details>
+        <summary>What does it log?</summary>
+        <p>One <code>slog</code> JSON line per inject and per attach-deny: <code>user</code>, <code>source_ip</code>, <code>namespace</code>, <code>pod</code>, <code>image</code>, <code>outcome</code>, <code>reason</code>, <code>duration_ms</code>. Successful attaches show up in gin's access log; the byte stream is never logged.</p>
+      </details>
+      <details>
+        <summary>Can I use a gateway other than Envoy Gateway?</summary>
+        <p>Yes. Anything that does OIDC and forwards a JWT in a header upstream works — Kong, Traefik EE, Apache APISIX, Cloudflare Access, an oauth2-proxy in front. porthole only cares that <code>X-ID-Token</code> or <code>Authorization: Bearer …</code> contains a JWT that validates against the JWKS URL you set.</p>
+      </details>
+      <details>
+        <summary>How does resize work over the websocket?</summary>
+        <p>The websocket is the only channel. Stdin and stdout travel as binary frames; the browser sends a JSON text frame for resize: <code>{"type":"resize","cols":120,"rows":30}</code>. porthole pushes that into a <code>remotecommand.TerminalSizeQueue</code>; the kubelet turns it into <code>TIOCSWINSZ</code> on the PTY.</p>
+      </details>
+      <details>
+        <summary>Is it open source?</summary>
+        <p>Yes. Source on <a href="https://github.com/bcollard/porthole" target="_blank" rel="noopener">GitHub</a>. Issues and PRs welcome.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="22" height="22">
+            <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="4"/>
+            <circle cx="32" cy="32" r="6"  fill="currentColor"/>
+          </svg>
+        </span>
+        <strong>porthole</strong>
+      </div>
+      <p class="footer-tag">A small window into a running pod.<br>Browser-driven debugging for Kubernetes.</p>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="https://github.com/bcollard/porthole" target="_blank" rel="noopener">Source</a></li>
+        <li><a href="https://github.com/bcollard/porthole/releases" target="_blank" rel="noopener">Releases</a></li>
+        <li><a href="https://github.com/bcollard/porthole/issues" target="_blank" rel="noopener">Issues &amp; feedback</a></li>
+        <li><a href="https://github.com/bcollard/porthole/blob/main/docs/architecture.svg" target="_blank" rel="noopener">Architecture diagrams</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Built on</h4>
+      <ul>
+        <li><a href="https://xtermjs.org/" target="_blank" rel="noopener">xterm.js</a> — the web terminal</li>
+        <li><a href="https://gateway.envoyproxy.io/" target="_blank" rel="noopener">Envoy Gateway</a> — OIDC + routing</li>
+        <li><a href="https://www.openpolicyagent.org/" target="_blank" rel="noopener">Open Policy Agent</a> — authZ decisions</li>
+        <li>Kubernetes <code>ephemeralcontainers</code> + <code>remotecommand</code></li>
+      </ul>
+    </div>
+  </div>
+  <p class="copy">© 2026 Baptiste Collard · MIT licensed · <a href="https://github.com/bcollard/porthole" target="_blank" rel="noopener">Audit the source</a></p>
+</footer>
+
+<script>
+  // Theme toggle (auto → light → dark → auto)
+  (function() {
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    const stored = localStorage.getItem('porthole-theme');
+    if (stored) root.setAttribute('data-theme', stored);
+
+    btn.addEventListener('click', () => {
+      const cur = root.getAttribute('data-theme') || 'auto';
+      const next = cur === 'auto' ? 'light' : cur === 'light' ? 'dark' : 'auto';
+      root.setAttribute('data-theme', next);
+      if (next === 'auto') localStorage.removeItem('porthole-theme');
+      else localStorage.setItem('porthole-theme', next);
+    });
+  })();
+
+  // Copy-to-clipboard
+  (function() {
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copy);
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1200);
+        } catch (e) { /* no clipboard */ }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

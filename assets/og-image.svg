@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630"
+     font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0b0d12"/>
+      <stop offset="100%" stop-color="#101728"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#93c0ff"/>
+      <stop offset="100%" stop-color="#3b6fe0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#6ea8fe" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#6ea8fe" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="grad-h" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#93c0ff"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- subtle grid in the background -->
+  <g stroke="#1a1f29" stroke-width="1" opacity="0.5">
+    <line x1="0"   y1="120" x2="1200" y2="120"/>
+    <line x1="0"   y1="510" x2="1200" y2="510"/>
+  </g>
+
+  <!-- porthole glyph on the right -->
+  <g transform="translate(880, 315)">
+    <circle r="170" fill="url(#glow)"/>
+    <circle r="130" fill="none" stroke="url(#ring)" stroke-width="10"/>
+    <circle r="38"  fill="url(#ring)"/>
+    <g fill="#93c0ff">
+      <circle cx="0"    cy="-150" r="6"/>
+      <circle cx="0"    cy="150"  r="6"/>
+      <circle cx="-150" cy="0"    r="6"/>
+      <circle cx="150"  cy="0"    r="6"/>
+    </g>
+  </g>
+
+  <!-- text block -->
+  <g transform="translate(80, 200)">
+    <text font-size="20" letter-spacing="6" fill="#8b94a3" font-weight="600">PORTHOLE</text>
+
+    <text y="80" font-size="68" font-weight="800" fill="#e6e8ec">Kubernetes debug</text>
+    <text y="150" font-size="68" font-weight="800" fill="url(#grad-h)">terminal in your browser.</text>
+
+    <text y="220" font-size="22" fill="#b8c4d4" font-weight="400">Inject ephemeral containers. Attach with xterm.js.</text>
+    <text y="252" font-size="22" fill="#b8c4d4" font-weight="400">OIDC at the edge, OPA inside, audit log out.</text>
+
+    <text y="330" font-size="18" fill="#5d6573" font-family="ui-monospace, 'SF Mono', Menlo, monospace">porthole.runlocal.dev</text>
+  </g>
+</svg>
