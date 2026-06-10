@@ -76,6 +76,7 @@
     <a href="#how">How it works</a>
     <a href="#authz">Auth</a>
     <a href="#audit">Audit</a>
+    <a href="#compare">Compare</a>
     <a href="#install">Install</a>
     <a href="#faq">FAQ</a>
     <a href="https://github.com/bcollard/porthole" class="nav-github" target="_blank" rel="noopener">GitHub →</a>
@@ -296,6 +297,106 @@ PONG
   <span class="key">"outcome"</span>:         <span class="str">"denied"</span>,
   <span class="key">"reason"</span>:          <span class="str">"matched: group=devs ns=payments — outside business hours"</span>
 }</code></pre>
+  </div>
+</section>
+
+<section class="section" id="compare">
+  <div class="container">
+    <p class="kicker">Compare</p>
+    <h2>Porthole vs. similar projects.</h2>
+    <p class="section-lede">
+      Porthole is a narrow tool: a browser-based attach-to-pod terminal that injects ephemeral containers, validates JWTs from an upstream OIDC gateway, and asks OPA for authorization. Here's how it lines up against three projects that overlap in different ways.
+    </p>
+
+    <div class="compare-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="compare-mine" scope="col">Porthole</th>
+            <th scope="col">Teleport</th>
+            <th scope="col">Headlamp</th>
+            <th scope="col">Lens / OpenLens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Form factor</th>
+            <td class="compare-mine">Web (in-cluster)</td>
+            <td>Web + CLI (<code>tsh</code>)</td>
+            <td>Web (in-cluster or desktop)</td>
+            <td>Desktop (Electron)</td>
+          </tr>
+          <tr>
+            <th scope="row">Primary purpose</th>
+            <td class="compare-mine">Attach-to-pod terminal</td>
+            <td>Access platform (SSH, k8s, DB, RDP, apps)</td>
+            <td>General-purpose k8s dashboard</td>
+            <td>General-purpose k8s IDE</td>
+          </tr>
+          <tr>
+            <th scope="row">Exec mechanism</th>
+            <td class="compare-mine"><strong>Ephemeral container</strong> (any image)</td>
+            <td><code>kubectl exec</code> into existing container</td>
+            <td><code>kubectl exec</code> into existing container</td>
+            <td><code>kubectl exec</code> into existing container</td>
+          </tr>
+          <tr>
+            <th scope="row">Custom debug image</th>
+            <td class="compare-mine">Yes — per-session, any registry</td>
+            <td>No (uses container's own shell)</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <th scope="row">Authentication</th>
+            <td class="compare-mine">JWT from upstream OIDC gateway (BYO IdP)</td>
+            <td>Built-in IdP + SSO connectors (SAML / OIDC / GitHub)</td>
+            <td>OIDC (built-in) or kubeconfig</td>
+            <td>Local kubeconfig only</td>
+          </tr>
+          <tr>
+            <th scope="row">Authorization</th>
+            <td class="compare-mine">OPA sidecar (Rego + bindings)</td>
+            <td>Built-in RBAC (Teleport roles)</td>
+            <td>Kubernetes RBAC (impersonation)</td>
+            <td>Kubernetes RBAC (user's kubeconfig)</td>
+          </tr>
+          <tr>
+            <th scope="row">Multi-cluster</th>
+            <td class="compare-mine">No (one cluster per install)</td>
+            <td>Yes (cluster of clusters)</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">Audit log</th>
+            <td class="compare-mine">Structured slog JSON per inject / attach / cleanup</td>
+            <td>Yes, with <strong>session recording / replay</strong></td>
+            <td>No native audit (k8s audit log applies)</td>
+            <td>No (runs on user's laptop)</td>
+          </tr>
+          <tr>
+            <th scope="row">Footprint</th>
+            <td class="compare-mine">One Deployment + OPA sidecar</td>
+            <td>Multi-component (auth, proxy, agents, backend store)</td>
+            <td>One Deployment</td>
+            <td>Desktop install per user</td>
+          </tr>
+          <tr>
+            <th scope="row">License</th>
+            <td class="compare-mine">Apache-2.0</td>
+            <td>Apache-2.0 (Community) + paid Enterprise</td>
+            <td>Apache-2.0 (CNCF Sandbox)</td>
+            <td>Lens: Mirantis EULA. OpenLens: MIT</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="compare-note">
+      In one line: <strong>pick Porthole</strong> when you already have an OIDC gateway, you want one central audit trail of pod attaches, and you regularly need to debug pods that don't ship with their own shell. If any one of those three is false, one of the projects above is probably a better fit.
+    </p>
   </div>
 </section>
 
