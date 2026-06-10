@@ -73,11 +73,11 @@
   </a>
   <div class="nav-right">
     <a href="#features">Features</a>
+    <a href="#install">Install</a>
     <a href="#how">How it works</a>
     <a href="#authz">Auth</a>
     <a href="#audit">Audit</a>
     <a href="#compare">Compare</a>
-    <a href="#install">Install</a>
     <a href="#faq">FAQ</a>
     <a href="https://github.com/bcollard/porthole" class="nav-github" target="_blank" rel="noopener">GitHub →</a>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
@@ -205,7 +205,103 @@ PONG
   </div>
 </section>
 
-<section class="section section-alt" id="how">
+<section class="section section-alt" id="install">
+  <div class="container">
+    <p class="kicker">Install</p>
+    <h2>One <code>helm install</code> away.</h2>
+    <p class="section-lede">
+      The chart at <code>oci://ghcr.io/bcollard/charts/porthole</code> ships the Deployment, ServiceAccount + cluster-wide RBAC, and an OPA sidecar pre-loaded with a sensible default policy. Bring your own OIDC-aware front (Envoy Gateway, ingress-nginx + oauth2-proxy, Traefik, …) — porthole only cares that <code>X-ID-Token</code> or <code>Authorization: Bearer …</code> contains a JWT it can verify against your IdP's JWKS.
+    </p>
+
+    <div class="install-cmd">
+      <pre><code><span class="prompt">$</span> helm install porthole oci://ghcr.io/bcollard/charts/porthole \
+    --namespace porthole --create-namespace \
+    -f my-values.yaml</code></pre>
+      <button class="copy-btn" data-copy="helm install porthole oci://ghcr.io/bcollard/charts/porthole --namespace porthole --create-namespace -f my-values.yaml" aria-label="Copy install command">Copy</button>
+    </div>
+
+    <div class="quickstart">
+      <h3><code>my-values.yaml</code> — three shapes to start from</h3>
+
+      <div class="tabs" id="tabs-install">
+        <div class="tabs-bar" role="tablist" aria-label="Install scenarios">
+          <button class="tabs-btn" role="tab" id="tab-install-dev"  aria-controls="panel-install-dev"  aria-selected="true"  tabindex="0">Port-forward · no auth</button>
+          <button class="tabs-btn" role="tab" id="tab-install-prod" aria-controls="panel-install-prod" aria-selected="false" tabindex="-1">OIDC gateway · OPA</button>
+          <button class="tabs-btn" role="tab" id="tab-install-byop" aria-controls="panel-install-byop" aria-selected="false" tabindex="-1">Bring your own policy</button>
+        </div>
+
+        <div class="tabs-panel" role="tabpanel" id="panel-install-dev" aria-labelledby="tab-install-dev">
+          <pre class="code"><code><span class="dim"># Skip JWT validation entirely. porthole stamps every request</span>
+<span class="dim"># as the `local-dev` principal — fine over kubectl port-forward,</span>
+<span class="dim"># never production. The default OPA data binds `local-dev` →</span>
+<span class="dim"># admin cluster-wide, so the UI lights up immediately.</span>
+<span class="kw">auth</span>:
+  <span class="kw">disabled</span>: <span class="lit">true</span>
+
+<span class="dim"># Optional — turn the OPA sidecar off too to keep the pod</span>
+<span class="dim"># single-container. porthole short-circuits authZ to allow.</span>
+<span class="kw">opa</span>:
+  <span class="kw">enabled</span>: <span class="lit">false</span></code></pre>
+          <p class="tabs-foot"><span class="prompt">$</span> <code>kubectl -n porthole port-forward svc/porthole 8081:8081</code> → <code>http://localhost:8081/ui/</code></p>
+        </div>
+
+        <div class="tabs-panel" role="tabpanel" id="panel-install-prod" aria-labelledby="tab-install-prod" hidden>
+          <pre class="code"><code><span class="dim"># JWT validation against your IdP's JWKS. The OIDC handshake</span>
+<span class="dim"># happens at the gateway; porthole just verifies signatures</span>
+<span class="dim"># and extracts `sub`, `email`, `groups`.</span>
+<span class="kw">auth</span>:
+  <span class="kw">disabled</span>: <span class="lit">false</span>
+  <span class="kw">jwksURL</span>:  <span class="str">"https://idp.example.com/realms/eng/protocol/openid-connect/certs"</span>
+  <span class="kw">issuer</span>:   <span class="str">"https://idp.example.com/realms/eng"</span>
+  <span class="kw">audience</span>: <span class="str">"porthole"</span>
+
+<span class="dim"># CSWSH defence on the /term WebSocket upgrade. Set this</span>
+<span class="dim"># whenever you're behind a cookie-authenticated gateway.</span>
+<span class="kw">wsAllowedOrigins</span>: <span class="str">"https://porthole.example.com"</span>
+
+<span class="dim"># Gateway API HTTPRoute. Attaches to whichever Gateway your</span>
+<span class="dim"># platform team operates — Envoy Gateway, Istio, Cilium, …</span>
+<span class="kw">gatewayAPI</span>:
+  <span class="kw">enabled</span>: <span class="lit">true</span>
+  <span class="kw">hostnames</span>: [<span class="str">"porthole.example.com"</span>]
+  <span class="kw">parentRefs</span>:
+    - <span class="kw">name</span>: platform-gateway
+      <span class="kw">namespace</span>: gateway-system
+
+<span class="dim"># OPA sidecar — runs the bundled group×role×namespace policy.</span>
+<span class="kw">opa</span>:
+  <span class="kw">enabled</span>: <span class="lit">true</span></code></pre>
+        </div>
+
+        <div class="tabs-panel" role="tabpanel" id="panel-install-byop" aria-labelledby="tab-install-byop" hidden>
+          <pre class="code"><code><span class="dim"># Inline Rego + data live in the chart values. For real</span>
+<span class="dim"># policies, keep them in files and feed them via --set-file</span>
+<span class="dim"># so diffs stay reviewable. OPA hot-reloads the ConfigMap on</span>
+<span class="dim"># every change — no pod restart.</span>
+<span class="kw">opa</span>:
+  <span class="kw">enabled</span>: <span class="lit">true</span>
+  <span class="kw">policy</span>: |
+    package porthole.authz
+    <span class="dim"># ...your bindings, roles, namespace-label predicates here</span>
+  <span class="kw">data</span>: |
+    {
+      <span class="key">"policy"</span>: {
+        <span class="key">"roles"</span>:    { <span class="dim">/* action → permissions */</span> },
+        <span class="key">"bindings"</span>: [ <span class="dim">/* group → role × ns scope */</span> ]
+      }
+    }
+
+<span class="dim"># Optional — sweep porthole-injected ephemeral containers</span>
+<span class="dim"># older than this TTL. Pairs well with short debug sessions.</span>
+<span class="kw">ecSweepTTL</span>: <span class="str">"30m"</span></code></pre>
+          <p class="tabs-foot"><span class="prompt">$</span> <code>helm upgrade porthole oci://ghcr.io/bcollard/charts/porthole --reuse-values --set-file opa.policy=./policy/porthole.rego --set-file opa.data=./policy/data.json</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
   <div class="container">
     <p class="kicker">Under the hood</p>
     <h2>One websocket. Three byte paths. Zero magic.</h2>
@@ -230,18 +326,18 @@ PONG
   </div>
 </section>
 
-<section class="section" id="authz">
+<section class="section section-alt" id="authz">
   <div class="container">
     <p class="kicker">Identity &amp; authorization</p>
     <h2>Identity at the edge. Decisions next door.</h2>
     <p class="section-lede">
-      porthole separates <em>who</em> from <em>what's allowed</em>. Your gateway proves who. OPA decides what. Both arrows are independent so you can swap either side.
+      porthole separates <em>who</em> from <em>what's allowed</em>. Your gateway proves who. OPA decides what. Both arrows are independent so you can swap either side without touching the other.
     </p>
 
-    <div class="split">
-      <div class="split-col">
-        <h3>Authentication</h3>
-        <p>The gateway runs the OIDC handshake (against Keycloak, Auth0, Google, whatever) and forwards the validated request upstream with the token in a header. porthole reads <code>X-ID-Token</code> first, falls back to <code>Authorization: Bearer …</code>, validates against the configured JWKS endpoint, extracts <code>sub</code>, <code>email</code>, <code>groups</code>.</p>
+    <div class="auth-stack">
+      <div class="auth-block">
+        <h3>AuthN — the gateway proves who.</h3>
+        <p>The gateway runs the OIDC handshake (Keycloak, Auth0, Google, …) and forwards the validated request upstream with the ID token in a header. porthole reads <code>X-ID-Token</code> first, falls back to <code>Authorization: Bearer …</code>, validates against your IdP's JWKS, and extracts <code>sub</code>, <code>email</code>, <code>groups</code>.</p>
         <pre class="code"><code><span class="dim"># SecurityPolicy on Envoy Gateway</span>
 <span class="kw">spec</span>:
   oidc:
@@ -254,28 +350,110 @@ PONG
     forwardAccessToken: <span class="lit">true</span></code></pre>
       </div>
 
-      <div class="split-col">
-        <h3>Authorization</h3>
-        <p>An OPA sidecar runs alongside porthole. Each <code>list_pods</code>, <code>inject_ec</code>, <code>attach_ec</code> is sent as input — including the live namespace labels — and OPA returns <code>{allow, reason}</code>. The reason flows back into the audit log.</p>
-        <pre class="code"><code><span class="dim"># Rego — group × namespace_glob × labels × time</span>
-<span class="kw">decision</span> := {<span class="str">"allow"</span>: true, <span class="str">"reason"</span>: reason} <span class="kw">if</span> {
-  some binding in data.policy.bindings
-  binding.group in input.user.groups
-  matches_namespace(binding, input.request.namespace)
-  input.request.action in data.policy.roles[binding.role]
-  not violates_time_window(binding)
-  reason := <span class="str">"matched"</span>
+      <div class="auth-block">
+        <h3>AuthZ — OPA decides what.</h3>
+        <p>Every API call porthole serves is gated by one of <strong>six hardcoded actions</strong> (defined in <code>pkg/auth/opa.go</code>). The action, the user (from the JWT), and the live namespace labels go to OPA; OPA returns <code>{allow, reason}</code> and the reason flows straight into the audit log. "Roles" in the policy data are just your own human-friendly bundles of these actions — the action <em>names</em> themselves are not extensible from the policy.</p>
+
+        <div class="actions-ref">
+          <table class="actions-table">
+            <thead>
+              <tr><th scope="col">Action</th><th scope="col">What it gates</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row"><code>list_namespaces</code></th><td>Populating the namespace sidebar. Cluster-scoped — only an unconditional <code>namespace_glob: "*"</code> binding (no label constraints) can grant it.</td></tr>
+              <tr><th scope="row"><code>list_pods</code></th><td>Listing pods, services, and live namespace labels for a namespace.</td></tr>
+              <tr><th scope="row"><code>list_ec</code></th><td>Listing porthole-injected ephemeral containers already running on a pod.</td></tr>
+              <tr><th scope="row"><code>inject_ec</code></th><td>Patching the pod's <code>ephemeralcontainers</code> subresource to start a new debug container.</td></tr>
+              <tr><th scope="row"><code>attach_ec</code></th><td>Opening the WebSocket PTY stream to an ephemeral container.</td></tr>
+              <tr><th scope="row"><code>terminate_ec</code></th><td>Killing a porthole-injected ephemeral container.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tabs" id="tabs-authz">
+          <div class="tabs-bar" role="tablist" aria-label="Authorization scenarios">
+            <button class="tabs-btn" role="tab" id="tab-authz-none"   aria-controls="panel-authz-none"   aria-selected="true"  tabindex="0">No authN / Z</button>
+            <button class="tabs-btn" role="tab" id="tab-authz-roles"  aria-controls="panel-authz-roles"  aria-selected="false" tabindex="-1">Role from JWT groups</button>
+            <button class="tabs-btn" role="tab" id="tab-authz-labels" aria-controls="panel-authz-labels" aria-selected="false" tabindex="-1">Groups × namespace labels</button>
+          </div>
+
+          <div class="tabs-panel" role="tabpanel" id="panel-authz-none" aria-labelledby="tab-authz-none">
+            <p class="tabs-intro">Skip both layers. Every request becomes the <code>local-dev</code> principal; OPA isn't consulted. Zero JWT validation, zero policy evaluation — useful for tearing things apart over <code>kubectl port-forward</code>.</p>
+            <pre class="code"><code><span class="kw">auth</span>:
+  <span class="kw">disabled</span>: <span class="lit">true</span>     <span class="dim"># JWT validation off — `local-dev` for everyone</span>
+<span class="kw">opa</span>:
+  <span class="kw">enabled</span>: <span class="lit">false</span>    <span class="dim"># authZ short-circuits to allow</span></code></pre>
+          </div>
+
+          <div class="tabs-panel" role="tabpanel" id="panel-authz-roles" aria-labelledby="tab-authz-roles" hidden>
+            <p class="tabs-intro">Coarse but simple — the JWT's <code>groups</code> claim maps directly to a role, no namespace constraint. Good when porthole serves a single team and namespaces aren't multi-tenant.</p>
+            <pre class="code"><code><span class="kw">opa</span>:
+  <span class="kw">data</span>: |
+    {
+      <span class="key">"policy"</span>: {
+        <span class="key">"roles"</span>: {
+          <span class="key">"viewer"</span>:   [<span class="str">"list_namespaces"</span>, <span class="str">"list_pods"</span>, <span class="str">"list_ec"</span>],
+          <span class="key">"debugger"</span>: [<span class="str">"list_namespaces"</span>, <span class="str">"list_pods"</span>, <span class="str">"list_ec"</span>,
+                       <span class="str">"inject_ec"</span>, <span class="str">"attach_ec"</span>, <span class="str">"terminate_ec"</span>]
+        },
+        <span class="key">"bindings"</span>: [
+          <span class="dim">// Anyone in this group can debug any namespace.</span>
+          {<span class="key">"group"</span>: <span class="str">"platform-oncall"</span>, <span class="key">"role"</span>: <span class="str">"debugger"</span>, <span class="key">"namespace_glob"</span>: <span class="str">"*"</span>},
+          <span class="dim">// Read-only — see pods, can't inject.</span>
+          {<span class="key">"group"</span>: <span class="str">"support"</span>,         <span class="key">"role"</span>: <span class="str">"viewer"</span>,   <span class="key">"namespace_glob"</span>: <span class="str">"*"</span>}
+        ]
+      }
+    }</code></pre>
+          </div>
+
+          <div class="tabs-panel" role="tabpanel" id="panel-authz-labels" aria-labelledby="tab-authz-labels" hidden>
+            <p class="tabs-intro">The full pattern. A binding can require both a name glob <em>and</em> a set of namespace labels (logical AND), so JWT <code>groups</code> compose with the live cluster state — "<code>tenant-acme</code> debugs any <code>tenant-*</code> namespace labeled <code>tenant=acme</code>", "<code>secops</code> debugs anything labeled <code>tier=production</code>".</p>
+            <pre class="code"><code><span class="kw">opa</span>:
+  <span class="kw">data</span>: |
+    {
+      <span class="key">"policy"</span>: {
+        <span class="key">"roles"</span>: {
+          <span class="key">"debugger"</span>: [<span class="str">"list_namespaces"</span>, <span class="str">"list_pods"</span>, <span class="str">"list_ec"</span>,
+                       <span class="str">"inject_ec"</span>, <span class="str">"attach_ec"</span>, <span class="str">"terminate_ec"</span>]
+        },
+        <span class="key">"bindings"</span>: [
+          <span class="dim">// Per-team — glob match on namespace name only.</span>
+          {<span class="key">"group"</span>: <span class="str">"team-payments"</span>,
+           <span class="key">"role"</span>:  <span class="str">"debugger"</span>,
+           <span class="key">"namespace_glob"</span>: <span class="str">"payments-*"</span>},
+
+          <span class="dim">// Tenant — glob AND label must both match.</span>
+          {<span class="key">"group"</span>: <span class="str">"tenant-acme"</span>,
+           <span class="key">"role"</span>:  <span class="str">"debugger"</span>,
+           <span class="key">"namespace_glob"</span>: <span class="str">"tenant-*"</span>,
+           <span class="key">"namespace_labels"</span>: {<span class="key">"tenant"</span>: <span class="str">"acme"</span>}},
+
+          <span class="dim">// SecOps — any namespace labeled tier=production.</span>
+          {<span class="key">"group"</span>: <span class="str">"secops"</span>,
+           <span class="key">"role"</span>:  <span class="str">"debugger"</span>,
+           <span class="key">"namespace_labels"</span>: {<span class="key">"tier"</span>: <span class="str">"production"</span>}}
+        ]
+      }
+    }</code></pre>
+            <p class="tabs-foot"><span class="dim"># What porthole sends OPA per <code>inject_ec</code> call:</span></p>
+            <pre class="code"><code>{
+  <span class="key">"user"</span>:             {<span class="key">"groups"</span>: [<span class="str">"team-payments"</span>]},
+  <span class="key">"request"</span>:          {<span class="key">"action"</span>: <span class="str">"inject_ec"</span>,
+                       <span class="key">"namespace"</span>: <span class="str">"payments-checkout"</span>},
+  <span class="key">"namespace_labels"</span>: {<span class="key">"tier"</span>: <span class="str">"staging"</span>, <span class="key">"team"</span>: <span class="str">"payments"</span>}
 }</code></pre>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="callout">
-      <strong>Policy is data.</strong> Roles, bindings, and namespace-label requirements live in a JSON file mounted as a ConfigMap. <code>opa eval</code> against the file gives the platform team a regression suite that runs anywhere.
+      <strong>Policy is data.</strong> Roles, bindings, and namespace-label requirements live in JSON mounted as a ConfigMap. <code>opa eval</code> against the same file gives the platform team a regression suite that runs anywhere.
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="audit">
+<section class="section" id="audit">
   <div class="container">
     <p class="kicker">Audit</p>
     <h2>One JSON line per security-relevant action.</h2>
@@ -300,7 +478,7 @@ PONG
   </div>
 </section>
 
-<section class="section" id="compare">
+<section class="section section-alt" id="compare">
   <div class="container">
     <p class="kicker">Compare</p>
     <h2>Porthole vs. similar projects.</h2>
@@ -400,57 +578,7 @@ PONG
   </div>
 </section>
 
-<section class="section" id="install">
-  <div class="container">
-    <p class="kicker">Self-host it</p>
-    <h2>One Go binary, one ConfigMap, one gateway.</h2>
-    <p class="section-lede">
-      Build with <code>ko</code>, apply the manifests, set OIDC + OPA env vars. The repo ships a working <code>Makefile</code>, Envoy Gateway manifests, and a Keycloak bootstrap script for trying it end-to-end.
-    </p>
-
-    <div class="install-grid">
-      <div class="install-cmd">
-        <pre><code><span class="prompt">$</span> git clone https://github.com/bcollard/porthole
-<span class="prompt">$</span> cd porthole
-<span class="prompt">$</span> make e2e             <span class="dim"># cluster + envoy + opa + keycloak</span></code></pre>
-        <button class="copy-btn" data-copy="git clone https://github.com/bcollard/porthole
-cd porthole
-make e2e" aria-label="Copy install command">Copy</button>
-      </div>
-
-      <aside class="install-notes">
-        <p><strong>Prereqs.</strong> A Kubernetes cluster (kind works), <code>kubectl</code>, <code>helm</code>, <code>ko</code>, an OIDC provider, and the <code>opa</code> CLI for local policy testing.</p>
-        <ul>
-          <li>Envoy Gateway 1.6+ for the supplied <code>SecurityPolicy</code>.</li>
-          <li>OPA <code>0.69+</code> runs as a sidecar in the porthole pod.</li>
-          <li>An OIDC client registered with your IdP and a redirect URL pointing at the gateway.</li>
-          <li>RBAC: porthole's SA needs <code>patch</code> on <code>pods/ephemeralcontainers</code> and <code>create</code> on <code>pods/attach</code>.</li>
-        </ul>
-      </aside>
-    </div>
-
-    <div class="quickstart">
-      <h3>Then a typical request looks like this</h3>
-      <pre class="quickstart-pre"><code><span class="dim"># Developer opens https://porthole.example.com/ui/, signs in via SSO,</span>
-<span class="dim"># picks namespace 'payments', then pod 'api-7d4b9c5f-mznpr'.</span>
-
-<span class="dim"># Browser → POST /debug/inject</span>
-{<span class="key">"namespace"</span>:<span class="str">"payments"</span>,<span class="key">"pod"</span>:<span class="str">"api-..."</span>,<span class="key">"image"</span>:<span class="str">"nicolaka/netshoot"</span>}
-
-<span class="dim"># porthole → OPA</span>
-{<span class="key">"input"</span>:{<span class="key">"user"</span>:{<span class="key">"groups"</span>:[<span class="str">"team-payments"</span>]},
-          <span class="key">"request"</span>:{<span class="key">"action"</span>:<span class="str">"inject_ec"</span>,<span class="key">"namespace"</span>:<span class="str">"payments"</span>},
-          <span class="key">"namespace_labels"</span>:{<span class="key">"tier"</span>:<span class="str">"production"</span>}}}
-<span class="dim"># OPA → porthole</span>
-{<span class="key">"result"</span>:{<span class="key">"allow"</span>:<span class="lit">true</span>,<span class="key">"reason"</span>:<span class="str">"matched: group=team-payments role=debugger ns=payments"</span>}}
-
-<span class="dim"># porthole → kube-apiserver (PATCH ephemeralcontainers) → kubelet starts the EC</span>
-<span class="dim"># Browser opens WS /term/payments/api-.../porthole-a2045e61 → attached.</span></code></pre>
-    </div>
-  </div>
-</section>
-
-<section class="section section-alt" id="faq">
+<section class="section" id="faq">
   <div class="container">
     <p class="kicker">FAQ</p>
     <h2>Common questions.</h2>
@@ -542,6 +670,35 @@ make e2e" aria-label="Copy install command">Copy</button>
       root.setAttribute('data-theme', next);
       if (next === 'auto') localStorage.removeItem('porthole-theme');
       else localStorage.setItem('porthole-theme', next);
+    });
+  })();
+
+  // Tabs (install + authz scenarios)
+  (function() {
+    document.querySelectorAll('.tabs').forEach(group => {
+      const btns   = group.querySelectorAll('[role="tab"]');
+      const panels = group.querySelectorAll('[role="tabpanel"]');
+      const activate = btn => {
+        btns.forEach(b => {
+          const on = b === btn;
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+          b.tabIndex = on ? 0 : -1;
+        });
+        panels.forEach(p => {
+          p.hidden = p.getAttribute('aria-labelledby') !== btn.id;
+        });
+      };
+      btns.forEach((btn, i) => {
+        btn.addEventListener('click', () => activate(btn));
+        btn.addEventListener('keydown', e => {
+          if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+          e.preventDefault();
+          const dir = e.key === 'ArrowRight' ? 1 : -1;
+          const next = btns[(i + dir + btns.length) % btns.length];
+          activate(next);
+          next.focus();
+        });
+      });
     });
   })();
 
