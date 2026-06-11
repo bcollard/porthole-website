@@ -226,16 +226,16 @@ PONG
     </div>
 
     <div class="quickstart">
-      <h3><code>my-values.yaml</code> — three shapes to start from</h3>
+      <h3><code>my-values.yaml</code> — two shapes to start from</h3>
 
       <div class="tabs" id="tabs-install">
         <div class="tabs-bar" role="tablist" aria-label="Install scenarios">
-          <button class="tabs-btn" role="tab" id="tab-install-dev"  aria-controls="panel-install-dev"  aria-selected="true"  tabindex="0">Port-forward · no auth</button>
+          <button class="tabs-btn" role="tab" id="tab-install-dev"  aria-controls="panel-install-dev"  aria-selected="true"  tabindex="0">Local setup</button>
           <button class="tabs-btn" role="tab" id="tab-install-prod" aria-controls="panel-install-prod" aria-selected="false" tabindex="-1">OIDC gateway · OPA</button>
-          <button class="tabs-btn" role="tab" id="tab-install-byop" aria-controls="panel-install-byop" aria-selected="false" tabindex="-1">Bring your own policy</button>
         </div>
 
         <div class="tabs-panel" role="tabpanel" id="panel-install-dev" aria-labelledby="tab-install-dev">
+          <p class="tabs-intro">Smallest possible setup — runs in <code>kind</code> or any cluster you can <code>kubectl port-forward</code> into. No JWT validation, no OPA sidecar: porthole stamps every request as the <code>local-dev</code> principal and short-circuits authZ.</p>
           <pre class="code"><code><span class="dim"># Skip JWT validation entirely. porthole stamps every request</span>
 <span class="dim"># as the `local-dev` principal — fine over kubectl port-forward,</span>
 <span class="dim"># never production. The default OPA data binds `local-dev` →</span>
@@ -251,6 +251,7 @@ PONG
         </div>
 
         <div class="tabs-panel" role="tabpanel" id="panel-install-prod" aria-labelledby="tab-install-prod" hidden>
+          <p class="tabs-intro">The production shape — JWT validation at porthole, Gateway-API exposure, OPA sidecar. Inline <code>opa.policy</code> / <code>opa.data</code> are placeholders; real deployments keep the Rego in files and feed them via <code>--set-file</code> (footer below) so diffs stay reviewable. OPA hot-reloads the ConfigMap on every change — no pod restart.</p>
           <pre class="code"><code><span class="dim"># JWT validation against your IdP's JWKS. The OIDC handshake</span>
 <span class="dim"># happens at the gateway; porthole just verifies signatures</span>
 <span class="dim"># and extracts `sub`, `email`, `groups`.</span>
@@ -273,16 +274,9 @@ PONG
     - <span class="kw">name</span>: platform-gateway
       <span class="kw">namespace</span>: gateway-system
 
-<span class="dim"># OPA sidecar — runs the bundled group×role×namespace policy.</span>
-<span class="kw">opa</span>:
-  <span class="kw">enabled</span>: <span class="lit">true</span></code></pre>
-        </div>
-
-        <div class="tabs-panel" role="tabpanel" id="panel-install-byop" aria-labelledby="tab-install-byop" hidden>
-          <pre class="code"><code><span class="dim"># Inline Rego + data live in the chart values. For real</span>
-<span class="dim"># policies, keep them in files and feed them via --set-file</span>
-<span class="dim"># so diffs stay reviewable. OPA hot-reloads the ConfigMap on</span>
-<span class="dim"># every change — no pod restart.</span>
+<span class="dim"># OPA sidecar — runs the bundled group×role×namespace policy</span>
+<span class="dim"># by default. Override `policy` / `data` for your own bindings;</span>
+<span class="dim"># keep them in real files and use --set-file (see footer).</span>
 <span class="kw">opa</span>:
   <span class="kw">enabled</span>: <span class="lit">true</span>
   <span class="kw">policy</span>: |
@@ -444,24 +438,36 @@ PONG
 <section class="section section-alt" id="audit">
   <div class="container">
     <p class="kicker">Audit</p>
-    <h2>One JSON line per security-relevant action.</h2>
+    <h2>One ECS JSON line per security-relevant action.</h2>
     <p class="section-lede">
-      Every inject — success, error, or deny — emits an <code>slog</code> JSON line on stdout. Same for every attach that the policy refuses. Picks up cleanly in Loki, Splunk, or any structured-log pipeline.
+      Every inject, attach-deny, and cleanup emits a structured <code>slog</code> line on stdout shaped to the <a href="https://www.elastic.co/guide/en/ecs/8.11/index.html" target="_blank" rel="noopener">Elastic Common Schema</a> (v8.11). Picks up cleanly in Elastic, Loki, Splunk — anything that keys on <code>event.action</code>, <code>event.outcome</code>, <code>user.id</code>, or <code>kubernetes.namespace</code>, with no custom parser.
     </p>
 
     <pre class="audit-pre"><code>{
-  <span class="key">"time"</span>:            <span class="str">"2026-06-07T10:53:45Z"</span>,
-  <span class="key">"level"</span>:           <span class="str">"WARN"</span>,
-  <span class="key">"msg"</span>:             <span class="str">"inject"</span>,
-  <span class="key">"action"</span>:          <span class="str">"inject_ec"</span>,
-  <span class="key">"user"</span>:            <span class="str">"alice@example.com"</span>,
-  <span class="key">"source_ip"</span>:       <span class="str">"10.0.1.5"</span>,
-  <span class="key">"namespace"</span>:       <span class="str">"payments"</span>,
-  <span class="key">"pod"</span>:             <span class="str">"api-7d4b9c5f-mznpr"</span>,
-  <span class="key">"image"</span>:           <span class="str">"nicolaka/netshoot"</span>,
-  <span class="key">"duration_ms"</span>:     <span class="lit">12</span>,
-  <span class="key">"outcome"</span>:         <span class="str">"denied"</span>,
-  <span class="key">"reason"</span>:          <span class="str">"matched: group=devs ns=payments — outside business hours"</span>
+  <span class="key">"@timestamp"</span>:    <span class="str">"2026-06-07T10:53:45Z"</span>,
+  <span class="key">"log.level"</span>:     <span class="str">"WARN"</span>,
+  <span class="key">"message"</span>:       <span class="str">"inject"</span>,
+  <span class="key">"ecs.version"</span>:   <span class="str">"8.11"</span>,
+  <span class="key">"event"</span>: {
+    <span class="key">"kind"</span>:        <span class="str">"event"</span>,
+    <span class="key">"category"</span>:    [<span class="str">"iam"</span>],
+    <span class="key">"action"</span>:      <span class="str">"inject_ec"</span>,
+    <span class="key">"type"</span>:        <span class="str">"denied"</span>,
+    <span class="key">"outcome"</span>:     <span class="str">"failure"</span>,
+    <span class="key">"dataset"</span>:     <span class="str">"porthole.audit"</span>,
+    <span class="key">"provider"</span>:    <span class="str">"porthole"</span>,
+    <span class="key">"duration"</span>:    <span class="lit">12387251</span>,
+    <span class="key">"reason"</span>:      <span class="str">"matched: group=junior-devs role=debugger ns=dev-checkout — outside business hours"</span>
+  },
+  <span class="key">"user"</span>:          { <span class="key">"id"</span>: <span class="str">"alice@example.com"</span> },
+  <span class="key">"source"</span>:        { <span class="key">"ip"</span>: <span class="str">"10.0.1.5"</span> },
+  <span class="key">"kubernetes"</span>: {
+    <span class="key">"namespace"</span>:   <span class="str">"dev-checkout"</span>,
+    <span class="key">"pod"</span>:         { <span class="key">"name"</span>: <span class="str">"api-7d4b9c5f-mznpr"</span> }
+  },
+  <span class="key">"container"</span>: {
+    <span class="key">"image"</span>:       { <span class="key">"name"</span>: <span class="str">"nicolaka/netshoot"</span> }
+  }
 }</code></pre>
   </div>
 </section>
@@ -571,23 +577,13 @@ PONG
     <p class="kicker">Under the hood</p>
     <h2>One websocket. Three byte paths. Zero magic.</h2>
     <p class="section-lede">
-      Browser → gateway → porthole → kube-apiserver → kubelet → PTY. porthole multiplexes three flows over the single websocket: stdin and stdout as binary frames, resize as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half.
+      Stdout, stdin, and terminal resize each travel on the single browser ↔ porthole websocket — two as binary frames, one as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half. The diagram below traces a byte from xterm.js all the way to the kubelet PTY.
     </p>
 
-    <div class="arch-bullets">
-      <div>
-        <h4>Browser ↔ porthole</h4>
-        <p>Binary frames carry stdin/stdout. <code>{"type":"resize","cols":N,"rows":M}</code> as a text frame keeps the PTY size in sync with the browser. xterm.js handles the rendering.</p>
-      </div>
-      <div>
-        <h4>porthole ↔ kube-apiserver</h4>
-        <p>Standard <code>POST /api/v1/namespaces/&lt;ns&gt;/pods/&lt;p&gt;/attach</code> via the client-go <code>remotecommand</code> executor — SPDY with WebSocket fallback. A <code>TerminalSizeQueue</code> propagates resize events to the kubelet.</p>
-      </div>
-      <div>
-        <h4>kubelet ↔ container PTY</h4>
-        <p>Vanilla CRI streaming. Resize events become <code>TIOCSWINSZ</code> ioctls + <code>SIGWINCH</code>. Source-IP and TLS terminate at the gateway — porthole runs cleartext inside the cluster.</p>
-      </div>
-    </div>
+    <figure class="diagram">
+      <img src="/assets/traffic-flow.svg" alt="Porthole traffic flow diagram. Three rows show the byte paths through an attach session — OUTPUT (kubelet PTY → xterm.js, green), INPUT (xterm.js keystrokes → io.Pipe → kube-apiserver, blue), and RESIZE (xterm.js → TerminalSizeQueue → kubelet, yellow). All three multiplex on a single WebSocket between browser and porthole.">
+      <figcaption>Three independent flows multiplexed on a single websocket: stdout (binary), stdin (binary), resize (JSON text frame).</figcaption>
+    </figure>
   </div>
 </section>
 
