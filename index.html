@@ -251,7 +251,7 @@ PONG
         </div>
 
         <div class="tabs-panel" role="tabpanel" id="panel-install-prod" aria-labelledby="tab-install-prod" hidden>
-          <p class="tabs-intro">The production shape — JWT validation at porthole, Gateway-API exposure, OPA sidecar. Inline <code>opa.policy</code> / <code>opa.data</code> are placeholders; real deployments keep the Rego in files and feed them via <code>--set-file</code> (footer below) so diffs stay reviewable. OPA hot-reloads the ConfigMap on every change — no pod restart.</p>
+          <p class="tabs-intro">The production shape — JWT validation at porthole, Gateway-API exposure, OPA sidecar. The chart serialises whatever you put under <code>opa.policy</code> / <code>opa.data</code> into a ConfigMap it owns and mounts on the OPA sidecar — <strong>no separate ConfigMap to author</strong>. The rules below are placeholders; real deployments keep the Rego in files and pull them in via <code>--set-file</code> (footer below) so diffs stay reviewable. OPA hot-reloads on every chart update — no pod restart.</p>
           <pre class="code"><code><span class="dim"># JWT validation against your IdP's JWKS. The OIDC handshake</span>
 <span class="dim"># happens at the gateway; porthole just verifies signatures</span>
 <span class="dim"># and extracts `sub`, `email`, `groups`.</span>
@@ -381,7 +381,8 @@ PONG
           </div>
 
           <div class="tabs-panel" role="tabpanel" id="panel-authz-labels" aria-labelledby="tab-authz-labels" hidden>
-            <p class="tabs-intro">The full pattern. A binding can combine JWT <code>groups</code>, namespace name globs, namespace labels, and an optional <code>business_hours: true</code> time window (Mon–Fri 09:00–17:00). All present constraints must hold (logical AND), so you can express things like "<code>tenant-acme</code> debugs <code>tenant-*</code> namespaces labeled <code>tenant=acme</code>", "<code>secops</code> debugs anything labeled <code>tier=production</code>", or "junior devs only during working hours". <em>The time-window check ships in the repo's <code>policy/porthole.rego</code> — the chart's bundled default policy doesn't gate on it; load the file via <code>--set-file opa.policy=</code> to enable it.</em></p>
+            <p class="tabs-intro">The full pattern. A binding can combine JWT <code>groups</code>, namespace name globs, namespace labels, and an optional <code>business_hours: true</code> time window. All present constraints must hold (logical AND), so you can express things like "<code>tenant-acme</code> debugs <code>tenant-*</code> namespaces labeled <code>tenant=acme</code>", "<code>secops</code> debugs anything labeled <code>tier=production</code>", or "junior devs only during working hours".</p>
+            <p class="tabs-intro"><strong>How the time window resolves:</strong> porthole stamps <code>input.now</code> on every OPA call with its own <code>time.Now().UTC().Format(RFC3339)</code> — the wall clock is the porthole pod's, not the user's browser. The Rego in <code>policy/porthole.rego</code> compares via <code>time.weekday</code> and <code>time.clock</code>: Mon–Fri, <code>09 ≤ hour &lt; 17</code> <strong>UTC</strong>. Want a different range or a non-UTC zone? Edit the <code>violates_time_window</code> rule (e.g. <code>time.clock(now, "America/New_York")</code> for ET). <em>The chart's bundled default policy doesn't include <code>business_hours</code> — load the full file via <code>--set-file opa.policy=./policy/porthole.rego</code> to enable it.</em></p>
             <pre class="code"><code><span class="kw">opa</span>:
   <span class="kw">data</span>: |
     {

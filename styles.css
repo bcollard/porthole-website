@@ -409,13 +409,11 @@ pre code {
   font-size: clamp(28px, 4vw, 46px);
   letter-spacing: -0.02em;
   margin: 0 0 18px;
-  max-width: 24ch;
   line-height: 1.1;
 }
 .section-lede {
   font-size: 17px;
   color: var(--text-2);
-  max-width: 64ch;
   margin: 0 0 56px;
 }
 .section-lede strong { color: var(--text); font-weight: 700; }
@@ -500,7 +498,6 @@ pre code {
   margin: 0 0 18px;
   color: var(--text-2);
   font-size: 14.5px;
-  max-width: 78ch;
 }
 
 /* ---------- Actions reference table ---------- */
@@ -593,8 +590,9 @@ pre code {
   margin: 0 0 12px;
   color: var(--text-2);
   font-size: 14.5px;
-  max-width: 78ch;
 }
+.tabs-intro + .tabs-intro { margin-top: -2px; }
+.tabs-intro strong { color: var(--text); }
 .tabs-intro em { color: var(--text); font-style: normal; font-weight: 600; }
 .tabs-foot {
   margin: 12px 0 0;
@@ -730,7 +728,6 @@ pre code {
   border-radius: var(--radius-md);
   color: var(--text);
   font-size: 15px;
-  max-width: 80ch;
 }
 .compare-note strong { color: var(--brand); }
 
