@@ -74,10 +74,10 @@
   <div class="nav-right">
     <a href="#features">Features</a>
     <a href="#install">Install</a>
-    <a href="#how">How it works</a>
     <a href="#authz">Auth</a>
     <a href="#audit">Audit</a>
     <a href="#compare">Compare</a>
+    <a href="#how">How it works</a>
     <a href="#faq">FAQ</a>
     <a href="https://github.com/bcollard/porthole" class="nav-github" target="_blank" rel="noopener">GitHub →</a>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
@@ -164,6 +164,10 @@ PONG
 
 <section class="section" id="features">
   <div class="container">
+    <!-- TODO: replace with an animation walking through the web UI:
+         namespace pick → pod pick → inject ephemeral container → attached terminal.
+         Original "Why" content stashed below for reference.
+
     <p class="kicker">Why</p>
     <h2>The friction between a developer and a misbehaving pod, removed.</h2>
     <p class="section-lede">
@@ -179,7 +183,7 @@ PONG
       <article class="card">
         <span class="card-num">02</span>
         <h3>Ephemeral, not invasive</h3>
-        <p>porthole patches the pod's <code>ephemeralcontainers</code> subresource — the workload container is untouched and stays in place. When the websocket closes, the debug container can be evicted by the next pod restart.</p>
+        <p>porthole patches the pod's <code>ephemeralcontainers</code> subresource &mdash; the workload container is untouched and stays in place. When the websocket closes, the debug container can be evicted by the next pod restart.</p>
       </article>
       <article class="card">
         <span class="card-num">03</span>
@@ -189,12 +193,12 @@ PONG
       <article class="card">
         <span class="card-num">04</span>
         <h3>OIDC at the edge</h3>
-        <p>Front porthole with an Envoy Gateway <code>SecurityPolicy</code> (or your gateway of choice). porthole only trusts JWTs it can verify against the JWKS endpoint — no header forgery, no shared secrets.</p>
+        <p>Front porthole with an Envoy Gateway <code>SecurityPolicy</code> (or your gateway of choice). porthole only trusts JWTs it can verify against the JWKS endpoint &mdash; no header forgery, no shared secrets.</p>
       </article>
       <article class="card">
         <span class="card-num">05</span>
         <h3>OPA-decided authZ</h3>
-        <p>An OPA sidecar runs the Rego your platform team writes. Group memberships from the JWT, namespace labels resolved live, time-windows, glob matchers — everything is data, not code.</p>
+        <p>An OPA sidecar runs the Rego your platform team writes. Group memberships from the JWT, namespace labels resolved live, time-windows, glob matchers &mdash; everything is data, not code.</p>
       </article>
       <article class="card">
         <span class="card-num">06</span>
@@ -202,6 +206,7 @@ PONG
         <p>Structured slog output, one line per <code>inject</code> and per <code>attach</code> deny. SIEM-friendly out of the box: <code>user</code>, <code>namespace</code>, <code>pod</code>, <code>image</code>, <code>outcome</code>, <code>reason</code>.</p>
       </article>
     </div>
+    -->
   </div>
 </section>
 
@@ -301,32 +306,7 @@ PONG
   </div>
 </section>
 
-<section class="section" id="how">
-  <div class="container">
-    <p class="kicker">Under the hood</p>
-    <h2>One websocket. Three byte paths. Zero magic.</h2>
-    <p class="section-lede">
-      Browser → gateway → porthole → kube-apiserver → kubelet → PTY. porthole multiplexes three flows over the single websocket: stdin and stdout as binary frames, resize as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half.
-    </p>
-
-    <div class="arch-bullets">
-      <div>
-        <h4>Browser ↔ porthole</h4>
-        <p>Binary frames carry stdin/stdout. <code>{"type":"resize","cols":N,"rows":M}</code> as a text frame keeps the PTY size in sync with the browser. xterm.js handles the rendering.</p>
-      </div>
-      <div>
-        <h4>porthole ↔ kube-apiserver</h4>
-        <p>Standard <code>POST /api/v1/namespaces/&lt;ns&gt;/pods/&lt;p&gt;/attach</code> via the client-go <code>remotecommand</code> executor — SPDY with WebSocket fallback. A <code>TerminalSizeQueue</code> propagates resize events to the kubelet.</p>
-      </div>
-      <div>
-        <h4>kubelet ↔ container PTY</h4>
-        <p>Vanilla CRI streaming. Resize events become <code>TIOCSWINSZ</code> ioctls + <code>SIGWINCH</code>. Source-IP and TLS terminate at the gateway — porthole runs cleartext inside the cluster.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section section-alt" id="authz">
+<section class="section" id="authz">
   <div class="container">
     <p class="kicker">Identity &amp; authorization</p>
     <h2>Identity at the edge. Decisions next door.</h2>
@@ -407,7 +387,7 @@ PONG
           </div>
 
           <div class="tabs-panel" role="tabpanel" id="panel-authz-labels" aria-labelledby="tab-authz-labels" hidden>
-            <p class="tabs-intro">The full pattern. A binding can require both a name glob <em>and</em> a set of namespace labels (logical AND), so JWT <code>groups</code> compose with the live cluster state — "<code>tenant-acme</code> debugs any <code>tenant-*</code> namespace labeled <code>tenant=acme</code>", "<code>secops</code> debugs anything labeled <code>tier=production</code>".</p>
+            <p class="tabs-intro">The full pattern. A binding can combine JWT <code>groups</code>, namespace name globs, namespace labels, and an optional <code>business_hours: true</code> time window (Mon–Fri 09:00–17:00). All present constraints must hold (logical AND), so you can express things like "<code>tenant-acme</code> debugs <code>tenant-*</code> namespaces labeled <code>tenant=acme</code>", "<code>secops</code> debugs anything labeled <code>tier=production</code>", or "junior devs only during working hours". <em>The time-window check ships in the repo's <code>policy/porthole.rego</code> — the chart's bundled default policy doesn't gate on it; load the file via <code>--set-file opa.policy=</code> to enable it.</em></p>
             <pre class="code"><code><span class="kw">opa</span>:
   <span class="kw">data</span>: |
     {
@@ -431,7 +411,15 @@ PONG
           <span class="dim">// SecOps — any namespace labeled tier=production.</span>
           {<span class="key">"group"</span>: <span class="str">"secops"</span>,
            <span class="key">"role"</span>:  <span class="str">"debugger"</span>,
-           <span class="key">"namespace_labels"</span>: {<span class="key">"tier"</span>: <span class="str">"production"</span>}}
+           <span class="key">"namespace_labels"</span>: {<span class="key">"tier"</span>: <span class="str">"production"</span>}},
+
+          <span class="dim">// Junior devs — dev-* only, Mon–Fri 09:00–17:00 (server-side).</span>
+          <span class="dim">// Needs policy/porthole.rego loaded via --set-file (the default</span>
+          <span class="dim">// chart policy ignores `business_hours`).</span>
+          {<span class="key">"group"</span>: <span class="str">"junior-devs"</span>,
+           <span class="key">"role"</span>:  <span class="str">"debugger"</span>,
+           <span class="key">"namespace_glob"</span>: <span class="str">"dev-*"</span>,
+           <span class="key">"business_hours"</span>: <span class="lit">true</span>}
         ]
       }
     }</code></pre>
@@ -453,7 +441,7 @@ PONG
   </div>
 </section>
 
-<section class="section" id="audit">
+<section class="section section-alt" id="audit">
   <div class="container">
     <p class="kicker">Audit</p>
     <h2>One JSON line per security-relevant action.</h2>
@@ -478,7 +466,7 @@ PONG
   </div>
 </section>
 
-<section class="section section-alt" id="compare">
+<section class="section" id="compare">
   <div class="container">
     <p class="kicker">Compare</p>
     <h2>Porthole vs. similar projects.</h2>
@@ -575,6 +563,31 @@ PONG
     <p class="compare-note">
       In one line: <strong>pick Porthole</strong> when you already have an OIDC gateway, you want one central audit trail of pod attaches, and you regularly need to debug pods that don't ship with their own shell. If any one of those three is false, one of the projects above is probably a better fit.
     </p>
+  </div>
+</section>
+
+<section class="section section-alt" id="how">
+  <div class="container">
+    <p class="kicker">Under the hood</p>
+    <h2>One websocket. Three byte paths. Zero magic.</h2>
+    <p class="section-lede">
+      Browser → gateway → porthole → kube-apiserver → kubelet → PTY. porthole multiplexes three flows over the single websocket: stdin and stdout as binary frames, resize as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half.
+    </p>
+
+    <div class="arch-bullets">
+      <div>
+        <h4>Browser ↔ porthole</h4>
+        <p>Binary frames carry stdin/stdout. <code>{"type":"resize","cols":N,"rows":M}</code> as a text frame keeps the PTY size in sync with the browser. xterm.js handles the rendering.</p>
+      </div>
+      <div>
+        <h4>porthole ↔ kube-apiserver</h4>
+        <p>Standard <code>POST /api/v1/namespaces/&lt;ns&gt;/pods/&lt;p&gt;/attach</code> via the client-go <code>remotecommand</code> executor — SPDY with WebSocket fallback. A <code>TerminalSizeQueue</code> propagates resize events to the kubelet.</p>
+      </div>
+      <div>
+        <h4>kubelet ↔ container PTY</h4>
+        <p>Vanilla CRI streaming. Resize events become <code>TIOCSWINSZ</code> ioctls + <code>SIGWINCH</code>. Source-IP and TLS terminate at the gateway — porthole runs cleartext inside the cluster.</p>
+      </div>
+    </div>
   </div>
 </section>
 
