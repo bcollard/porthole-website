@@ -463,7 +463,8 @@ pre code {
   padding: 10px 10px 6px;
   box-shadow: 0 22px 60px -28px rgba(0,0,0,0.45);
 }
-.diagram img {
+.diagram img,
+.diagram video {
   display: block;
   width: 100%;
   height: auto;

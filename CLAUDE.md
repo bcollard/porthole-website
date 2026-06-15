@@ -59,6 +59,40 @@ committed — the PNG is what crawlers fetch.
 
 ---
 
+## Diagrams and media sourced from the porthole repo
+
+In-section visual assets are **copies** of files maintained in the
+[porthole](https://github.com/bcollard/porthole) repo. When the
+porthole-side file changes, refresh the website's copy.
+
+```
+# diagrams (SVG)
+~/projects/private/porthole/docs/architecture.svg
+~/projects/private/porthole/docs/sequence.svg
+~/projects/private/porthole/docs/traffic-flow.svg     → assets/traffic-flow.svg ("How it works")
+
+# demo recordings (MP4 + JPG poster)
+~/projects/private/porthole/docs/public-recordings/porthole-demo.mp4  → assets/porthole-demo.mp4 ("Why")
+~/projects/private/porthole/docs/public-recordings/poster.jpg         → assets/poster.jpg          (poster)
+```
+
+Refresh:
+
+```bash
+cp ~/projects/private/porthole/docs/traffic-flow.svg assets/
+cp ~/projects/private/porthole/docs/public-recordings/porthole-demo.mp4 assets/
+cp ~/projects/private/porthole/docs/public-recordings/poster.jpg assets/
+```
+
+The SVGs already ship a self-contained dark palette
+(`#0b0d12` background, brand-blue accents) that matches the site's
+code-block aesthetic — no restyling needed. The MP4 is wrapped in a
+`<figure class="diagram demo">` so the dark frame and rounded corners
+match the rest of the visual blocks. The deploy pipeline picks up
+new files in `assets/` automatically.
+
+---
+
 ## Deploy pipeline
 
 Push to `main` that touches anything outside `README.md`, `CLAUDE.md`,
