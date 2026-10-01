@@ -5,7 +5,7 @@ the browser-based Kubernetes debug terminal. Hand-rolled HTML/CSS — no SSG,
 no framework, no JS dependencies beyond a tiny theme toggle. Served as
 static files from a GCS bucket.
 
-Sibling sites at `klimax.runlocal.dev` and `claudestatus.runlocal.dev`
+Sibling sites at `marina.run` and `claudestatus.runlocal.dev`
 use the exact same pattern; treat them as siblings — any change here
 should probably be considered there.
 
@@ -56,6 +56,13 @@ rsvg-convert -w 1200 -h 630 assets/og-image.svg -o assets/og-image.png
 
 Edit the SVG (text, gradient, layout) and re-run. Both files are
 committed — the PNG is what crawlers fetch.
+
+**Keep the CTA pill.** [opengraph.xyz](https://www.opengraph.xyz/)
+audits flag cards without a visible call-to-action. The current
+card carries a brand-gradient "Self-host it →" pill next to the URL
+— preserve that (or replace with another CTA) on any edit. The
+sibling sites at `marina.run` and `claudestatus.runlocal.dev`
+likely have the same gap and would benefit from the same pattern.
 
 ---
 
@@ -129,7 +136,7 @@ The current rsync exclude pattern (`-x`) catches `gha-creds-*.json`.
 Keep it there. If you ever rewrite the workflow, preserve that
 exclusion.
 
-The sibling `klimax.runlocal.dev` and `claudestatus.runlocal.dev`
+The sibling `marina.run` and `claudestatus.runlocal.dev`
 workflows have the same exclusion — match the pattern when touching them.
 
 ### 2. The custom IAM role needs `storage.objects.update` for `setmeta`
