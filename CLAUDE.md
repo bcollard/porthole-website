@@ -23,6 +23,8 @@ should probably be considered there.
 │   ├── favicon.svg
 │   ├── og-image.svg
 │   └── og-image.png
+├── scripts/
+│   └── set-version.py
 ├── cicd/
 │   └── setup-gcp-wif.sh
 └── .github/workflows/
@@ -42,6 +44,23 @@ should probably be considered there.
 `safe-chain.cjs` shim that fails with `EACCES` on `/usr/local/certs/`.
 Same for any other `python3 -c …` invocation. Always go through
 `/usr/bin/python3`.
+
+---
+
+## Release version badge
+
+The top bar shows the latest porthole release next to "GitHub →". porthole
+has no GitHub releases — it ships as Helm chart tags `chart-vX.Y.Z`
+(`appVersion` = `X.Y.Z`). On every new chart tag:
+
+```bash
+git -C ~/projects/private/porthole tag --sort=-v:refname | head -1   # e.g. chart-v0.2.0
+/usr/bin/python3 scripts/set-version.py v0.2.0
+```
+
+The script rewrites the badge (linked to `releases/tag/chart-vX.Y.Z`) and
+stamps `styles.css?v=vX.Y.Z` on every page. Same pattern as `marina.run`.
+`scripts/` is excluded from the bucket rsync.
 
 ---
 
