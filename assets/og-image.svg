@@ -55,8 +55,8 @@
     <text y="80" font-size="68" font-weight="800" fill="#e6e8ec">Kubernetes debug</text>
     <text y="150" font-size="68" font-weight="800" fill="url(#grad-h)">terminal in your browser.</text>
 
-    <text y="220" font-size="22" fill="#b8c4d4" font-weight="400">Inject ephemeral containers. Attach with xterm.js.</text>
-    <text y="252" font-size="22" fill="#b8c4d4" font-weight="400">OIDC at the edge, OPA inside, audit log out.</text>
+    <text y="220" font-size="22" fill="#b8c4d4" font-weight="400">Inject ephemeral containers. Open a shell.</text>
+    <text y="252" font-size="22" fill="#b8c4d4" font-weight="400">OIDC login, OPA authorization, audit log.</text>
 
     <!-- CTA pill + URL -->
     <g transform="translate(0, 320)">

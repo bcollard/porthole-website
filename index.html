@@ -15,7 +15,7 @@
   </script>
 
   <title>porthole — Kubernetes debug terminal in your browser</title>
-  <meta name="description" content="Inject ephemeral containers into running pods and attach to them from your browser. OIDC at the edge, OPA inside, structured audit log out. Open source.">
+  <meta name="description" content="Inject ephemeral containers into running pods and open a shell in them from your browser. OIDC authentication, OPA authorization, structured audit log. Open source.">
   <link rel="canonical" href="https://porthole.runlocal.dev/">
 
   <meta name="theme-color" content="#6ea8fe" media="(prefers-color-scheme: light)">
@@ -33,7 +33,7 @@
   <meta property="og:locale" content="en_US">
   <meta property="og:url" content="https://porthole.runlocal.dev/">
   <meta property="og:title" content="porthole — Kubernetes debug terminal in your browser">
-  <meta property="og:description" content="Pick a pod, inject any debug image, attach over a single websocket. Identity verified at the edge, every action logged.">
+  <meta property="og:description" content="Pick a pod, inject any debug image, and open a shell from your browser. OIDC login at the gateway, every action logged.">
   <meta property="og:image" content="https://porthole.runlocal.dev/assets/og-image.png">
   <meta property="og:image:secure_url" content="https://porthole.runlocal.dev/assets/og-image.png">
   <meta property="og:image:type" content="image/png">
@@ -44,7 +44,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://porthole.runlocal.dev/">
   <meta name="twitter:title" content="porthole — Kubernetes debug terminal in your browser">
-  <meta name="twitter:description" content="Pick a pod, inject any debug image, attach over a single websocket. Identity verified at the edge, every action logged.">
+  <meta name="twitter:description" content="Pick a pod, inject any debug image, and open a shell from your browser. OIDC login at the gateway, every action logged.">
   <meta name="twitter:image" content="https://porthole.runlocal.dev/assets/og-image.png">
   <meta name="twitter:image:alt" content="porthole — Kubernetes debug terminal in your browser.">
 
@@ -103,14 +103,14 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <div class="eyebrow">
-        <span class="dot"></span> Browser-driven · OIDC · OPA · Open source
+        <span class="dot"></span> OIDC · OPA · Open source
       </div>
       <h1>
         Kubernetes debug terminal,<br>
         <span class="grad">in your browser.</span>
       </h1>
       <p class="lede">
-        <strong>porthole</strong> drops an <em>ephemeral container</em> next to any running pod, attaches to it from a slick web terminal, and logs every decision. Identity verified at the edge by your OIDC gateway. Every namespace touch decided by OPA. <code>kubectl exec</code> for developers who don't need <code>kubectl</code>.
+        <strong>porthole</strong> injects an <em>ephemeral container</em> into a running pod and opens a shell in it from the browser. Your OIDC gateway authenticates the user, OPA authorizes each action, and every action goes to an audit log. Developers don't need a kubeconfig.
       </p>
       <div class="cta">
         <a href="#install" class="btn btn-primary">Self-host it</a>
@@ -122,9 +122,9 @@
         </a>
       </div>
       <ul class="hero-bullets">
-        <li>Single Go binary. Embeds the SPA. One port, REST and WS share it.</li>
-        <li>Bring your own debug image — busybox, netshoot, psql, your own forensics toolkit.</li>
-        <li>OIDC handshake stays at the gateway; porthole just verifies the JWT.</li>
+        <li>Single Go binary with the web UI embedded. REST and WebSocket on one port.</li>
+        <li>Any debug image: busybox, netshoot, psql, or your own.</li>
+        <li>The gateway handles the OIDC login. porthole only verifies the JWT.</li>
       </ul>
     </div>
 
@@ -175,16 +175,16 @@ PONG
 <section class="section" id="features">
   <div class="container">
     <p class="kicker">Why</p>
-    <h2>The friction between a developer and a misbehaving pod, removed.</h2>
+    <h2>Debug pods without a kubeconfig.</h2>
     <p class="section-lede">
-      Lens and k9s are great if every developer has cluster credentials and a kubeconfig. Most don't. porthole hands them a URL, an OIDC login, and a terminal — backed by ephemeral containers so the target pod stays exactly as deployed.
+      Lens and k9s need cluster credentials and a kubeconfig on each developer's machine. porthole gives developers a URL, an OIDC login, and a terminal. It uses ephemeral containers, so the target pod is not restarted and its containers are not changed.
     </p>
 
     <figure class="diagram demo">
       <video autoplay loop muted playsinline preload="metadata" poster="/assets/poster.jpg" aria-label="Porthole web UI demo: pick a namespace, pick a pod, inject an ephemeral container, attach to a shell.">
         <source src="/assets/porthole-demo.mp4" type="video/mp4">
       </video>
-      <figcaption>A typical session — pick a namespace, pick a pod, inject <code>netshoot</code>, get a shell.</figcaption>
+      <figcaption>Pick a namespace and a pod, inject <code>netshoot</code>, open a shell.</figcaption>
     </figure>
   </div>
 </section>
@@ -192,7 +192,7 @@ PONG
 <section class="section section-alt" id="install">
   <div class="container">
     <p class="kicker">Install</p>
-    <h2>One <code>helm install</code> away.</h2>
+    <h2>Install with Helm.</h2>
     <p class="section-lede">
       The chart at <code>oci://ghcr.io/bcollard/charts/porthole</code> ships the Deployment, ServiceAccount + cluster-wide RBAC, and an OPA sidecar pre-loaded with a sensible default policy. Bring your own OIDC-aware front (Envoy Gateway, ingress-nginx + oauth2-proxy, Traefik, …) — porthole only cares that <code>X-ID-Token</code> or <code>Authorization: Bearer …</code> contains a JWT it can verify against your IdP's JWKS.
     </p>
@@ -205,7 +205,7 @@ PONG
     </div>
 
     <div class="quickstart">
-      <h3><code>my-values.yaml</code> — two shapes to start from</h3>
+      <h3>Example <code>my-values.yaml</code></h3>
 
       <div class="tabs" id="tabs-install">
         <div class="tabs-bar" role="tablist" aria-label="Install scenarios">
@@ -282,14 +282,14 @@ PONG
 <section class="section" id="authz">
   <div class="container">
     <p class="kicker">Identity &amp; authorization</p>
-    <h2>Identity at the edge. Decisions next door.</h2>
+    <h2>Authentication at the gateway, authorization in OPA.</h2>
     <p class="section-lede">
-      porthole separates <em>who</em> from <em>what's allowed</em>. Your gateway proves who. OPA decides what. Both arrows are independent so you can swap either side without touching the other.
+      Your gateway authenticates the user. OPA decides what the user can do. You can replace either one without changing the other.
     </p>
 
     <div class="auth-stack">
       <div class="auth-block">
-        <h3>AuthN — the gateway proves who.</h3>
+        <h3>Authentication: the gateway</h3>
         <p>The gateway runs the OIDC handshake (Keycloak, Auth0, Google, …) and forwards the validated request upstream with the ID token in a header. porthole reads <code>X-ID-Token</code> first, falls back to <code>Authorization: Bearer …</code>, validates against your IdP's JWKS, and extracts <code>sub</code>, <code>email</code>, <code>groups</code>.</p>
         <pre class="code"><code><span class="dim"># SecurityPolicy on Envoy Gateway</span>
 <span class="kw">spec</span>:
@@ -304,7 +304,7 @@ PONG
       </div>
 
       <div class="auth-block">
-        <h3>AuthZ — OPA decides what.</h3>
+        <h3>Authorization: OPA</h3>
         <p>Every API call porthole serves is gated by one of <strong>six hardcoded actions</strong> (defined in <code>pkg/auth/opa.go</code>). The action, the user (from the JWT), and the live namespace labels go to OPA; OPA returns <code>{allow, reason}</code> and the reason flows straight into the audit log. "Roles" in the policy data are just your own human-friendly bundles of these actions — the action <em>names</em> themselves are not extensible from the policy.</p>
 
         <div class="actions-ref">
@@ -418,7 +418,7 @@ PONG
 <section class="section section-alt" id="audit">
   <div class="container">
     <p class="kicker">Audit</p>
-    <h2>One ECS JSON line per security-relevant action.</h2>
+    <h2>Audit log in ECS JSON.</h2>
     <p class="section-lede">
       Every inject, attach-deny, and cleanup emits a structured <code>slog</code> line on stdout shaped to the <a href="https://www.elastic.co/guide/en/ecs/8.11/index.html" target="_blank" rel="noopener">Elastic Common Schema</a> (v8.11). Picks up cleanly in Elastic, Loki, Splunk — anything that keys on <code>event.action</code>, <code>event.outcome</code>, <code>user.id</code>, or <code>kubernetes.namespace</code>, with no custom parser.
     </p>
@@ -457,7 +457,7 @@ PONG
     <p class="kicker">Compare</p>
     <h2>Porthole vs. similar projects.</h2>
     <p class="section-lede">
-      Porthole is a narrow tool: a browser-based attach-to-pod terminal that injects ephemeral containers, validates JWTs from an upstream OIDC gateway, and asks OPA for authorization. Here's how it lines up against three projects that overlap in different ways.
+      Porthole does one thing: it injects ephemeral containers and opens a shell in them from the browser, with JWTs validated from an OIDC gateway and authorization by OPA. The table compares it with three related projects.
     </p>
 
     <div class="compare-wrap">
@@ -547,22 +547,22 @@ PONG
     </div>
 
     <p class="compare-note">
-      In one line: <strong>pick Porthole</strong> when you already have an OIDC gateway, you want one central audit trail of pod attaches, and you regularly need to debug pods that don't ship with their own shell. If any one of those three is false, one of the projects above is probably a better fit.
+      <strong>Pick Porthole</strong> when you already have an OIDC gateway, you want one central audit trail of pod attaches, and you regularly need to debug pods that don't ship with their own shell. If one of these is not true, another project in the table is probably a better fit.
     </p>
   </div>
 </section>
 
 <section class="section section-alt" id="how">
   <div class="container">
-    <p class="kicker">Under the hood</p>
-    <h2>One websocket. Three byte paths. Zero magic.</h2>
+    <p class="kicker">How it works</p>
+    <h2>Output, input, and resize share one WebSocket.</h2>
     <p class="section-lede">
-      Stdout, stdin, and terminal resize each travel on the single browser ↔ porthole websocket — two as binary frames, one as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half. The diagram below traces a byte from xterm.js all the way to the kubelet PTY.
+      Stdout, stdin, and terminal resize each travel on the single browser ↔ porthole websocket — two as binary frames, one as a JSON text frame. The k8s <code>remotecommand</code> executor stitches the upstream half. The diagram shows the path from xterm.js to the kubelet PTY.
     </p>
 
     <figure class="diagram">
       <img src="/assets/traffic-flow.svg" alt="Porthole traffic flow diagram. Three rows show the byte paths through an attach session — OUTPUT (kubelet PTY → xterm.js, green), INPUT (xterm.js keystrokes → io.Pipe → kube-apiserver, blue), and RESIZE (xterm.js → TerminalSizeQueue → kubelet, yellow). All three multiplex on a single WebSocket between browser and porthole.">
-      <figcaption>Three independent flows multiplexed on a single websocket: stdout (binary), stdin (binary), resize (JSON text frame).</figcaption>
+      <figcaption>stdout (binary), stdin (binary), and resize (JSON text frame) on one WebSocket.</figcaption>
     </figure>
   </div>
 </section>
@@ -621,7 +621,7 @@ PONG
         </span>
         <strong>porthole</strong>
       </div>
-      <p class="footer-tag">A small window into a running pod.<br>Browser-driven debugging for Kubernetes.</p>
+      <p class="footer-tag">Kubernetes debug terminal in your browser.</p>
     </div>
     <div>
       <h4>Project</h4>
